@@ -1,4 +1,4 @@
-#/usr/bin/perl
+#!/usr/bin/perl
 
 ## VRegEexp - Visual Regex Explorer #####################
 #
@@ -34,7 +34,7 @@ my ( $lastterm, $lasttext ) = ( '', '' );
 sub DEBUG () { return 0 }
 
 my $OS;
-given ($^O) {"VRegEx"
+given ($^O) {
     when (/Win32/) { $OS = 'Win32' };
     default        { $OS = 'Linux' };
 };
