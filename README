@@ -1,0 +1,30 @@
+
+
+VRegExp - Visual Regex Explorer
+
+
+A Perl/Tk GUI based regex tweaking / testing utility.
+
+
+Author: Stephen Schulze (thundergnat)
+
+
+An extention/modification of a regex tweaking utility I had posted on
+perlmonks.org in Sept 2011. http://www.perlmonks.org/?node_id=927175
+
+
+Edit regexes with near instant feedback on syntax errors. 
+Test your regex against a piece of text for feedback on if it matches,
+what it matches, where it matches and what is in each capture group.
+
+See what the effect of modification flags has on what your regex matches.
+Supports (ismx) flags as well as the (g) global modifier.
+
+Uses YAPE::Regex::Explain to give detailed explanations of what any valid
+regex. (As long as it doesn't use any of the extensions added in perl 5.12
+or later. That's a limitation of Y::R::E. If it gets updated, then so will
+VRegExp.)
+
+Works and tested on Windows and Linux. Allows customization of font family
+and size for the various interface elements. Remembers any customizations 
+as well as window size / placement / layout from session to session.
