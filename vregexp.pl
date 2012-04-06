@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-## VRegEexp - Visual Regex Explorer #####################
+## VRegExp - Visual Regex Explorer #####################
 #
 # Author: Stephen Schulze (thundergnat)
 #
@@ -740,9 +740,9 @@ sub regexplain {
         $w{splainpop}->focus;
         $w{splaintext}->delete( '1.0', 'end' );
         $w{splaintext}->insert( 'end', $message );
-        $w{splaintext}->see('end');
-        $w{splaintext}->update;
-        $w{splaintext}->see('1.0');
+        $w{splaintext}->see('end');  # Work-around for scrollbar
+        $w{splaintext}->update;      # that doesn't show up unless
+        $w{splaintext}->see('1.0');  # window is resized.
     }
     else {
         $w{splainpop} = $w{mw}->Toplevel;
@@ -756,10 +756,11 @@ sub regexplain {
         $w{splaintext} = $frame->Scrolled(
             'ROText',
             -width      => 72,
-            -height     => 20,
+            -height     => 30,
             -background => 'white',
             -wrap       => 'word',
             -scrollbars => 'oe',
+            -font       => $settings{font}{$OS}[0],
           )->pack(
             -anchor => 'nw',
             -expand => 'yes',
