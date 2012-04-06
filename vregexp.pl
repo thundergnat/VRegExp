@@ -4,7 +4,7 @@
 #
 # Author: Stephen Schulze (thundergnat)
 #
-# An extention/modification of a regex tweaking utility
+# An extension/modification of a regex tweaking utility
 # had posted on perlmonks.org in Sept 2011.
 #
 # http://www.perlmonks.org/?node_id=927175
@@ -43,10 +43,9 @@ my %settings = (
     regex => '\b((\w)\w*\2)\b',
     text  => 'Put some text in this window to match against. '
       . 'Match words that start and end with the same letter.',
-    font => {    # 0: text boxes, 1: menus, 2: Other
+    font => {    # 0: text boxes, 1: menus, 2: other
         Win32 => [ '{Courier New} 10', '{Courier New} 10', '{Arial} 10' ],
         Linux => [ '{Monospace} 10',   '{Monospace} 8',    '{Monospace} 10' ]
-        ,        # Not Win32
     },
     geometry => '650x480',
     sash     => [ [ 2, 80 ], [ 2, 240 ] ],
