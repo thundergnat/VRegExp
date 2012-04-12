@@ -425,6 +425,7 @@ sub whine {
 
 sub Tk::Error {                                       # Trap runtime errors.
     my ( $w, $error, @msgs ) = @_;
+    $update = 0;
     whine($error)
       if $error =~ /Unicode property/;    # Report unicode property errors
     say $error if DEBUG;
