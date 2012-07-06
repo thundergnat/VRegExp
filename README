@@ -1,5 +1,4 @@
 
-
 VRegExp - Visual Regex Explorer
 
 
@@ -21,7 +20,7 @@ See what the effect of modification flags has on what your regex matches.
 Supports (ismx) flags as well as the (g) global modifier.
 
 Uses YAPE::Regex::Explain to give detailed explanations of what any valid
-regex. (As long as it doesn't use any of the extensions added in perl 5.12
+regex. (As long as it doesn't use any of the extensions added in perl 5.10
 or later. That's a limitation of Y::R::E. If it gets updated, then so will
 VRegExp.)
 
