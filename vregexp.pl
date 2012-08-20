@@ -5,7 +5,7 @@
 # Author: Stephen Schulze (thundergnat)
 #
 # An extension/modification of a regex tweaking utility
-# had posted on perlmonks.org in Sept 2011.
+# I had posted on perlmonks.org in Sept 2011.
 #
 # http://www.perlmonks.org/?node_id=927175
 #
@@ -14,7 +14,7 @@
 use warnings;
 use strict;
 use charnames ':full', ':short';
-use 5.10.0; # using given/when
+use 5.10.0;    # using given/when
 
 use Tk;
 use Tk::TextUndo;
@@ -53,19 +53,23 @@ my %settings = (
         err       => '#FFC0C0',
         ok        => 'green',
         highlight => 'yellow',
-    }
+    },
+    reg_wrap  => 'none',
+    text_wrap => 'word',
+    out_wrap  => 'none',
 );
 
 if ( -e $settings_file ) {
-    %settings = LoadFile($settings_file);
+    my %in = LoadFile($settings_file);
+    $settings{$_} = delete $in{$_} for keys %in;
 }
 
 my %flag = (    # regex flags
-    case     => '', # i
-    multiple => '', # m
-    single   => '', # s
-    ws       => '', # x
-    global   => 1   # g
+    case     => '',    # i
+    multiple => '',    # m
+    single   => '',    # s
+    ws       => '',    # x
+    global   => 1      # g
 );
 
 my $update;
@@ -84,7 +88,6 @@ $w{help} = $w{mw}->Balloon( -initwait => 1000 );
 $w{fd} = $w{mw}->FontDialog(
     -nicefont => 0,
     -title    => 'Select Font',
-    #-applycmd        => sub {},
     -familylabel      => 'Font Family',
     -fixedfontsbutton => 1,
     -nicefontsbutton  => 1,
@@ -174,7 +177,8 @@ $w{reg_error} = $w{top_frame}->Label(
 $w{reg_term} = $w{mw}->Scrolled(
     'TextUndo',
     -exportselection => 'true',
-    -scrollbars      => 'e',
+    -scrollbars      => 'ose',
+    -wrap            => $settings{term_wrap},
     -background      => 'white',
     -font            => $settings{font}{$OS}[0],
 );
@@ -182,9 +186,9 @@ $w{reg_term} = $w{mw}->Scrolled(
 ## Text box for text to apply regex to. Middle pane of Paned window
 $w{reg_text} = $w{mw}->Scrolled(
     'TextUndo',
-    -wrap            => 'word',
+    -wrap            => $settings{text_wrap},
     -exportselection => 'true',
-    -scrollbars      => 'e',
+    -scrollbars      => 'ose',
     -background      => 'white',
     -font            => $settings{font}{$OS}[0],
 );
@@ -214,8 +218,9 @@ for ( 1 .. 9 ) {
 
 $w{rst_text} = $w{output_frame}->Scrolled(
     'ROText',
-    -scrollbars => 'e',
+    -scrollbars => 'ose',
     -background => 'white',
+    -wrap       => $settings{outt_wrap},
     -font       => $settings{font}{$OS}[0],
 
   )->pack(
@@ -413,7 +418,7 @@ sub invalid {    # Check to see if a regex is valid.
 
 sub whine {
     my $error = shift;
-    $error =~ s/ at .+?$//;                 # Massage error text a bit.
+    $error =~ s/ at .+?$//;                    # Massage error text a bit.
     $error =~ s/[\cM\cJ]//g;
     $error =~ s/marked by <-- HERE in .+//s;
     $error_text = 'Regex Error: ' . $error;    # And display it.
@@ -423,16 +428,16 @@ sub whine {
     $w{reg_text}->tagRemove( 'highlight', '1.0', 'end' );
 }
 
-sub Tk::Error {                                       # Trap runtime errors.
+sub Tk::Error {                                # Trap runtime errors.
     my ( $w, $error, @msgs ) = @_;
     $update = 0;
     whine($error)
-      if $error =~ /Unicode property/;    # Report unicode property errors
+      if $error =~ /Unicode property/;         # Report unicode property errors
     say $error if DEBUG;
     return;
 }
 
-sub show_caps {                           # Show or hide capture checkboxes
+sub show_caps {                                # Show or hide capture checkboxes
     my ( $show, $cap1 ) = @_;
     if ($cap1) {
         $cap_disp = ' --  Captures: ';
@@ -462,26 +467,26 @@ sub apply_font {
     }
 }
 
-sub buildmenu {               # Build menus
+sub buildmenu {    # Build menus
     $w{menu}->Cascade(
         -label     => 'Metachars & Assertions',
         -tearoff   => 1,
         -menuitems => [
-            map { item($_) } (
-                [ '\\',  '    Quote the next metacharacter' ],
-                [ '^',   '    Match the beginning of a line' ],
-                [ '.',   '    Match any character (except newline)' ],
-                [ '$',   '    Match the end of a line' ],
-                [ '|',   '    Alternation' ],
-                [ '( )', '  Grouping' ],
-                [ '[ ]', '  Character class' ],
+            map { item( $_, 5 ) } (
+                [ '\\',  'Quote the next metacharacter' ],
+                [ '^',   'Match the beginning of a line' ],
+                [ '.',   'Match any character (except newline)' ],
+                [ '$',   'Match the end of a line' ],
+                [ '|',   'Alternation' ],
+                [ '( )', 'Grouping' ],
+                [ '[ ]', 'Character class' ],
                 ['sep'],
-                [ '\b', '   Match a word boundary' ],
-                [ '\B', '   Match except at a word boundary' ],
-                [ '\A', '   Match only at beginning of string' ],
-                [ '\Z', '   Match only at end, or before newline at the end' ],
-                [ '\z', '   Match only at end of string' ],
-                [ '\G', '   Match only at pos()' ]
+                [ '\b', 'Match a word boundary' ],
+                [ '\B', 'Match except at a word boundary' ],
+                [ '\A', 'Match only at beginning of string' ],
+                [ '\Z', 'Match only at end, or before newline at the end' ],
+                [ '\z', 'Match only at end of string' ],
+                [ '\G', 'Match only at pos()' ]
             )
         ]
     );
@@ -489,25 +494,25 @@ sub buildmenu {               # Build menus
         -label     => 'Quantifiers',
         -tearoff   => 1,
         -menuitems => [
-            map { item($_) } (
-                [ '*',      '       Match 0 or more times' ],
-                [ '+',      '       Match 1 or more times' ],
-                [ '?',      '       Match 1 or 0 times' ],
-                [ '{n}',    '     Match exactly n times' ],
-                [ '{n,}',   '    Match at least n times' ],
-                [ '{n,m}',  '   Match at least n but not more than m times' ],
-                [ '*?',     '      Match 0 or more times, not greedily' ],
-                [ '+?',     '      Match 1 or more times, not greedily' ],
-                [ '??',     '      Match 0 or 1 time, not greedily' ],
-                [ '{n}?',   '    Match exactly n times, not greedily' ],
-                [ '{n,}?',  '   Match at least n times, not greedily' ],
-                [ '{n,m}?', '  Match between n and m times, not greedily' ],
-                [ '*+',   '      Match 0 or more times and give nothing back' ],
-                [ '++',   '      Match 1 or more times and give nothing back' ],
-                [ '?+',   '      Match 0 or 1 time and give nothing back' ],
-                [ '{n}+', '    Match exactly n times and give nothing back' ],
-                [ '{n,}+',  '   Match at least n times and give nothing back' ],
-                [ '{n,m}+', '  Match from n to m times and give nothing back' ]
+            map { item( $_, 8 ) } (
+                [ '*',      'Match 0 or more times' ],
+                [ '+',      'Match 1 or more times' ],
+                [ '?',      'Match 1 or 0 times' ],
+                [ '{n}',    'Match exactly n times' ],
+                [ '{n,}',   'Match at least n times' ],
+                [ '{n,m}',  'Match at least n but not more than m times' ],
+                [ '*?',     'Match 0 or more times, not greedily' ],
+                [ '+?',     'Match 1 or more times, not greedily' ],
+                [ '??',     'Match 0 or 1 time, not greedily' ],
+                [ '{n}?',   'Match exactly n times, not greedily' ],
+                [ '{n,}?',  'Match at least n times, not greedily' ],
+                [ '{n,m}?', 'Match between n and m times, not greedily' ],
+                [ '*+',     'Match 0 or more times and give nothing back' ],
+                [ '++',     'Match 1 or more times and give nothing back' ],
+                [ '?+',     'Match 0 or 1 time and give nothing back' ],
+                [ '{n}+',   'Match exactly n times and give nothing back' ],
+                [ '{n,}+',  'Match at least n times and give nothing back' ],
+                [ '{n,m}+', 'Match from n to m times and give nothing back' ]
             )
         ]
     );
@@ -515,19 +520,19 @@ sub buildmenu {               # Build menus
         -label     => 'Grouping',
         -tearoff   => 1,
         -menuitems => [
-            map { item($_) } (
-                [ '(?#text)',      '           A comment' ],
-                [ '(?pimsx-imsx)', '      Enable / Disable modifier flags' ],
-                [ '(?:pattern)',   '        Non-capturing cluster' ],
-                [ '(?|pattern)',   '        Branch reset' ],
-                [ '(?=pattern)',   '        Zero-width positive look-ahead' ],
-                [ '(?!pattern)',   '        Zero-width negative look-ahead' ],
-                [ '(?<=pattern)',  '       Zero-width positive look-behind' ],
-                [ '(?<!pattern)',  '       Zero-width negative look-behind' ],
-                [ '(?\'NAME\'pattern)', '   A named capture buffer' ],
-                [ '(?<NAME>pattern)',   '   A named capture buffer' ],
-                [ '\k\'NAME\'',         '           Named backreference' ],
-                [ '\k<NAME>',           '           Named backreference' ]
+            map { item( $_, 18 ) } (
+                [ '(?#text)',           'A comment' ],
+                [ '(?pimsx-imsx)',      'Enable / Disable modifier flags' ],
+                [ '(?:pattern)',        'Non-capturing cluster' ],
+                [ '(?|pattern)',        'Branch reset' ],
+                [ '(?=pattern)',        'Zero-width positive look-ahead' ],
+                [ '(?!pattern)',        'Zero-width negative look-ahead' ],
+                [ '(?<=pattern)',       'Zero-width positive look-behind' ],
+                [ '(?<!pattern)',       'Zero-width negative look-behind' ],
+                [ '(?\'NAME\'pattern)', 'A named capture buffer' ],
+                [ '(?<NAME>pattern)',   'A named capture buffer' ],
+                [ '\k\'NAME\'',         'Named backreference' ],
+                [ '\k<NAME>',           'Named backreference' ]
             )
         ]
     );
@@ -535,19 +540,19 @@ sub buildmenu {               # Build menus
         -label     => 'Escapes',
         -tearoff   => 1,
         -menuitems => [
-            map { item($_) } (
-                [ '\t', '        Tab' ],
-                [ '\n', '        Newline' ],
-                [ '\r', '        Return' ],
-                [ '\f', '        Form feed' ],
-                [ '\a', '        Alarm (bell)' ],
-                [ '\e', '        Escape (think troff)' ],
-                [ '\l', '        Lowercase next char (think vi)' ],
-                [ '\u', '        Uppercase next char (think vi)' ],
-                [ '\L', '        Lowercase till \E (think vi)' ],
-                [ '\U', '        Uppercase till \E (think vi)' ],
-                [ '\E', '        End case modification (think vi)' ],
-                [ '\Q', '        Quote metacharacters till \E' ],
+            map { item( $_, 4 ) } (
+                [ '\t', 'Tab' ],
+                [ '\n', 'Newline' ],
+                [ '\r', 'Return' ],
+                [ '\f', 'Form feed' ],
+                [ '\a', 'Alarm (bell)' ],
+                [ '\e', 'Escape (think troff)' ],
+                [ '\l', 'Lowercase next char (think vi)' ],
+                [ '\u', 'Uppercase next char (think vi)' ],
+                [ '\L', 'Lowercase till \E (think vi)' ],
+                [ '\U', 'Uppercase till \E (think vi)' ],
+                [ '\E', 'End case modification (think vi)' ],
+                [ '\Q', 'Quote metacharacters till \E' ],
             )
         ]
     );
@@ -555,41 +560,38 @@ sub buildmenu {               # Build menus
         -label     => 'Classes',
         -tearoff   => 1,
         -menuitems => [
-            map { item($_) } (
-                [ '\w',  '        Match a word character (alphanumeric or _)' ],
-                [ '\W',  '        Match a non-"word" character' ],
-                [ '\s',  '        Match a whitespace character' ],
-                [ '\S',  '        Match a non-whitespace character' ],
-                [ '\d',  '        Match a digit character' ],
-                [ '\D',  '        Match a non-digit character' ],
-                [ '\pP', '       Match P, named property (short form).' ],
-                [ '\p{Prop}', '  Match named property.' ],
-                [ '\PP',      '       Match non-P' ],
-                [ '\P{Prop}', '  Match not named property.' ],
-                [ '\X',       '        Match eXtended Unicode sequence' ],
-                [ '\C',  '        Match a single C char, even under Unicode.' ],
-                [ '\1',  '        Reference to a capture group' ],
-                [ '\g1', '       Reference to a specific group,' ],
+            map { item( $_, 10 ) } (
+                [ '\w',       'Match a word character (alphanumeric or _)' ],
+                [ '\W',       'Match a non-"word" character' ],
+                [ '\s',       'Match a whitespace character' ],
+                [ '\S',       'Match a non-whitespace character' ],
+                [ '\d',       'Match a digit character' ],
+                [ '\D',       'Match a non-digit character' ],
+                [ '\pP',      'Match P, named property (short form).' ],
+                [ '\p{Prop}', 'Match named property.' ],
+                [ '\PP',      'Match non-P' ],
+                [ '\P{Prop}', 'Match not named property.' ],
+                [ '\X',       'Match eXtended Unicode sequence' ],
+                [ '\C',       'Match a single C char, even under Unicode.' ],
+                [ '\1',       'Reference to a capture group' ],
+                [ '\g1',      'Reference to a specific group,' ],
                 [
                     '\g{-1}',
-'    Negative means a previous buffer, use brackets for safer parsing.'
+'Negative means a previous buffer, use brackets for safer parsing.'
                 ],
-                [ '\g{name}', '  Named backreference' ],
-                [ '\k<name>', '  Named backreference' ],
-                [
-                    '\K',
-                    '        Keep the stuff left of \K, don\'t include in $&'
-                ],
-                [ '\v',       '        Vertical whitespace' ],
-                [ '\V',       '        Not vertical whitespace' ],
-                [ '\h',       '        Horizontal whitespace' ],
-                [ '\H',       '        Not horizontal whitespace' ],
-                [ '\R',       '        Linebreak' ],
-                [ '\0**',     '      Octal char' ],
-                [ '\x**',     '      Hex char' ],
-                [ '\x{****}', '  Long hex char' ],
-                [ '\c*',      '       Control char' ],
-                [ '\N{name}', '  Named Unicode character' ]
+                [ '\g{name}', 'Named backreference' ],
+                [ '\k<name>', 'Named backreference' ],
+                [ '\K',   'Keep the stuff left of \K, don\'t include in $&' ],
+                [ '\v',   'Vertical whitespace' ],
+                [ '\V',   'Not vertical whitespace' ],
+                [ '\h',   ' Horizontal whitespace' ],
+                [ '\H',   'Not horizontal whitespace' ],
+                [ '\R',   'Linebreak' ],
+                [ '\0**', 'Octal char' ],
+                [ '\x**', 'Hex char' ],
+                [ '\x{****}', 'Long hex char' ],
+                [ '\c*',      'Control char' ],
+                [ '\N{name}', 'Named Unicode character' ]
             )
         ]
     );
@@ -597,21 +599,21 @@ sub buildmenu {               # Build menus
         -label     => 'POSIX',
         -tearoff   => 1,
         -menuitems => [
-            map { item($_) } (
-                [ '[[:alpha:]]',  '   Unicode alphabetic character' ],
-                [ '[[:alnum:]]',  '   Unicode alphanumeric character' ],
-                [ '[[:ascii:]]',  '   ASCII character' ],
-                [ '[[:blank:]]',  '   \s + vertical tab \cK' ],
-                [ '[[:cntrl:]]',  '   Control character' ],
-                [ '[[:digit:]]',  '   Unicode digit' ],
-                [ '[[:graph:]]',  '   Any Alphanumeric or punctuation' ],
-                [ '[[:lower:]]',  '   Any lowercase character' ],
-                [ '[[:print:]]',  '   Any printable character' ],
-                [ '[[:punct:]]',  '   Any punctuation (special) character.' ],
-                [ '[[:space:]]',  '   Any space character ([[:blank:]])' ],
-                [ '[[:upper:]]',  '   Any uppercase character' ],
-                [ '[[:word:]]',   '    Alphabetic character or underscore' ],
-                [ '[[:xdigit:]]', '  A hex digit' ]
+            map { item( $_, 14 ) } (
+                [ '[[:alpha:]]',  'Unicode alphabetic character' ],
+                [ '[[:alnum:]]',  'Unicode alphanumeric character' ],
+                [ '[[:ascii:]]',  'ASCII character' ],
+                [ '[[:blank:]]',  '\s + vertical tab \cK' ],
+                [ '[[:cntrl:]]',  'Control character' ],
+                [ '[[:digit:]]',  'Unicode digit' ],
+                [ '[[:graph:]]',  'Any Alphanumeric or punctuation' ],
+                [ '[[:lower:]]',  'Any lowercase character' ],
+                [ '[[:print:]]',  'Any printable character' ],
+                [ '[[:punct:]]',  'Any punctuation (special) character.' ],
+                [ '[[:space:]]',  'Any space character ([[:blank:]])' ],
+                [ '[[:upper:]]',  'Any uppercase character' ],
+                [ '[[:word:]]',   'Alphabetic character or underscore' ],
+                [ '[[:xdigit:]]', 'A hex digit' ]
             )
         ]
     );
@@ -619,22 +621,22 @@ sub buildmenu {               # Build menus
         -label     => 'Named Properties',
         -tearoff   => 1,
         -menuitems => [
-            map { item($_) } (
-                [ '',          "Too many to list. See perldoc perlunicode." ],
-                [ '\p{Alpha}', '         Unicode alphabetic character' ],
-                [ '\p{Alnum}', '         Unicode alphanumeric character' ],
-                [ '\p{Punct}', '         Punctuation' ],
-                [ '\p{ASCII}', '         \x00 through \x7f' ],
-                [ '\p{HexDigit}',     '      Any hex digit' ],
-                [ '\p{L}',            '             Letter' ],
-                [ '\p{Lu}',           '            Upper case letter' ],
-                [ '\p{Ll}',           '            Lower case letter' ],
-                [ '\p{P}',            '             Punctuation' ],
-                [ '\p{S}',            '             Symbol' ],
-                [ '\p{Sm}',           '            Math symbol' ],
-                [ '\p{Latin}',        '         Is a Latin character' ],
-                [ '\p{Greek}',        '         Is a Greek character' ],
-                [ '\p{InBasicLatin}', '  In the Basic Latin code block' ]
+            map { item( $_, 18 ) } (
+                [ '',          'Too many to list. See perldoc perlunicode.' ],
+                [ '\p{Alpha}', 'Unicode alphabetic character' ],
+                [ '\p{Alnum}', 'Unicode alphanumeric character' ],
+                [ '\p{Punct}', 'Punctuation' ],
+                [ '\p{ASCII}', '\x00 through \x7f' ],
+                [ '\p{HexDigit}',     'Any hex digit' ],
+                [ '\p{L}',            'Letter' ],
+                [ '\p{Lu}',           'Upper case letter' ],
+                [ '\p{Ll}',           'Lower case letter' ],
+                [ '\p{P}',            'Punctuation' ],
+                [ '\p{S}',            'Symbol' ],
+                [ '\p{Sm}',           'Math symbol' ],
+                [ '\p{Latin}',        'Is a Latin character' ],
+                [ '\p{Greek}',        'Is a Greek character' ],
+                [ '\p{InBasicLatin}', 'In the Basic Latin code block' ]
             )
         ]
     );
@@ -701,18 +703,50 @@ sub buildmenu {               # Build menus
                     $settings{bg}{err} = color_pick( $settings{bg}{err} );
                     save_settings();
                   }
+            ],
+            [
+                Checkbutton => 'Regex Term Wrap',
+                -variable   => \$settings{term_wrap},
+                -onvalue    => 'char',
+                -offvalue   => 'none',
+                -command    => sub {
+                    $w{reg_term}->configure( -wrap => $settings{term_wrap} );
+                    save_settings();
+                },
+            ],
+            [
+                Checkbutton => 'Text Wrap',
+                -variable   => \$settings{text_wrap},
+                -onvalue    => 'word',
+                -offvalue   => 'none',
+                -command    => sub {
+                    $w{reg_text}->configure( -wrap => $settings{text_wrap} );
+                    save_settings();
+                  }
+            ],
+            [
+                Checkbutton => 'Results Wrap',
+                -variable   => \$settings{out_wrap},
+                -onvalue    => 'word',
+                -offvalue   => 'none',
+                -command    => sub {
+                    $w{rst_text}->configure( -wrap => $settings{out_wrap} );
+                    save_settings();
+                  }
             ]
         ]
     );
 }
 
 sub item {    # build a menu item
-    my $itemref = shift;
-    my ($item) = @$itemref;
-    return undef if $item eq 'sep';
+    my ( $itemref, $pad ) = @_;
+    return undef if $itemref->[0] eq 'sep';
+    my $item =
+      $itemref->[0] . ( ' ' x ( $pad - length $itemref->[0] ) ) . $itemref->[1];
     return [
-        Button   => "@$itemref",
-        -command => [ sub { $w{reg_term}->insert( 'insert', $_[0] ) }, $item ]
+        Button => $item,
+        -command =>
+          [ sub { $w{reg_term}->insert( 'insert', $_[0] ) }, $itemref->[0] ]
     ];
 }
 
@@ -740,9 +774,9 @@ sub regexplain {
         $w{splainpop}->focus;
         $w{splaintext}->delete( '1.0', 'end' );
         $w{splaintext}->insert( 'end', $message );
-        $w{splaintext}->see('end');  # Work-around for scrollbar
-        $w{splaintext}->update;      # that doesn't show up unless
-        $w{splaintext}->see('1.0');  # window is resized.
+        $w{splaintext}->see('end');    # Work-around for scrollbar
+        $w{splaintext}->update;        # that doesn't show up unless
+        $w{splaintext}->see('1.0');    # window is resized.
     }
     else {
         $w{splainpop} = $w{mw}->Toplevel;
@@ -782,4 +816,3 @@ sub color_pick {
     );
     return $choice // $init;
 }
-
