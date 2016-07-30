@@ -34,10 +34,11 @@ my ( $lastterm, $lasttext ) = ( '', '' );
 sub DEBUG () { return 0 }
 
 my $OS;
-given ($^O) {
-    when (/Win32/) { $OS = 'Win32' };
-    default        { $OS = 'Linux' };
-};
+if ($^O eq 'Win32') {
+    $OS = 'Win32'
+ } else {
+    $OS = 'Linux'
+}
 
 my %settings = (
     regex => '\b((\w)\w*\2)\b',
@@ -330,30 +331,26 @@ sub update {    # Check term and matches periodically.
         }
     }
     elsif ( $flag{global} ) {                   # global regex.
-        given (1) {
-            when ( $show[1] and $l ) {          # has captures
-                @results =
-                  map { ++$i . "(\$1):\t" . $_ } $text =~ /(?$flags)$term/g;
-                while ( $text =~ /(?$flags)$term/g ) {
-                    push @match_index,
-                      [ $-[0], ( $+[0] - $-[0] ) ];    # get match indicies
-                }
-            };
-            when ( !$show[1] and $l ) {                # no show
-                @results = map { '' } $text =~ /(?$flags)$term/g;
-                while ( $text =~ /(?$flags)$term/gs ) {
-                    push @match_index,
-                      [ $-[0], ( $+[0] - $-[0] ) ];    # get match indicies
-                }
-            };
-            default {                                  # no captures
-                @results =
-                  map { ++$i . ":\t" . $_ } $text =~ /(?$flags)$term/g;
-                while ( $text =~ /(?$flags)$term/g ) {
-                    push @match_index,
-                      [ $-[0], ( $+[0] - $-[0] ) ];    # get match indicies
-                }
-            };
+        if ( $show[1] and $l ) {          # has captures
+            @results =
+              map { ++$i . "(\$1):\t" . $_ } $text =~ /(?$flags)$term/g;
+            while ( $text =~ /(?$flags)$term/g ) {
+                push @match_index,
+                  [ $-[0], ( $+[0] - $-[0] ) ];    # get match indicies
+            }
+        } elsif ( !$show[1] and $l ) {                # no show
+            @results = map { '' } $text =~ /(?$flags)$term/g;
+            while ( $text =~ /(?$flags)$term/gs ) {
+                push @match_index,
+                  [ $-[0], ( $+[0] - $-[0] ) ];    # get match indicies
+            }
+        } else {                                  # no captures
+            @results =
+              map { ++$i . ":\t" . $_ } $text =~ /(?$flags)$term/g;
+            while ( $text =~ /(?$flags)$term/g ) {
+                push @match_index,
+                  [ $-[0], ( $+[0] - $-[0] ) ];    # get match indicies
+            }
         }
     }
     else {
@@ -363,6 +360,7 @@ sub update {    # Check term and matches periodically.
 
     my $results = join "\n", @results;
     $matches = $cap_count ? $cap_count : 'Matches: ' . scalar @results;
+
 
     if ( $text ne $lasttext or $term ne $lastterm ) {
 
@@ -378,7 +376,7 @@ sub update {    # Check term and matches periodically.
         $update = 0;
         return;    # Don't update if no term or text.
     }
-    if ( $w{rst_text}->Contents eq $results . "\n" ) {
+    if ( $w{rst_text}->Contents eq $results ) {
         $update = 0;
         return;    # Don't update if match results hasn't changed.
     }
@@ -392,7 +390,6 @@ sub adjust_highlighting {
     $w{reg_text}->tagRemove( 'highlight', '1.0', 'end' );
 
     # remove highlighting from text.
-    $w{mw}->Busy;
     my ( $lineidx, $matchacc ) = ( 1, 0 );
     for my $match (@$matches)
     {    # highlight the match indicies previously captured.
@@ -407,7 +404,6 @@ sub adjust_highlighting {
         $w{reg_text}->tagAdd( 'highlight', "$lineidx.$offset",
             "$lineidx.$offset +" . ( $match->[1] ) . 'c' );
     }
-    $w{mw}->Unbusy;
 }
 
 sub invalid {    # Check to see if a regex is valid.
